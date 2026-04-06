@@ -2,14 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Estandarizador de Códigos v10</title>
+    <title>Estandarizador de Códigos v12</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; min-height: 100vh; }
         .main-layout { display: flex; flex: 1; gap: 20px; }
         .left-section { flex: 1; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); max-width: 420px; height: fit-content; }
         .right-section { flex: 2; display: flex; flex-direction: column; gap: 20px; }
         .tables-row { display: flex; gap: 15px; flex-wrap: wrap; }
-        .side-table { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; min-width: 280px; }
+        .side-table { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; min-width: 250px; }
         h2, h3 { color: #333; text-align: center; margin-top: 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         table { border-collapse: collapse; width: 100%; font-size: 10px; }
         th, td { border: 1px solid #ddd; padding: 5px; text-align: center; }
@@ -17,7 +17,6 @@
         .field { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
         
-        /* Contenedor de medidas con selector de unidad */
         .measure-container { display: flex; flex-direction: column; gap: 5px; border: 1px solid #eee; padding: 10px; border-radius: 8px; background: #fafafa; }
         .unit-selector { display: flex; gap: 2px; margin-bottom: 5px; justify-content: flex-end; }
         .unit-btn { padding: 4px 10px; font-size: 11px; border: 1px solid #ccc; background: #fff; cursor: pointer; border-radius: 4px; transition: 0.2s; }
@@ -25,10 +24,9 @@
         
         .dimension-group { display: flex; align-items: center; gap: 8px; }
         .dimension-group input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
-        .dimension-group span { font-weight: bold; }
         
         select, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         button#gen-btn { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
         .breakdown-section { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
         #final-code-display { margin-top: 15px; padding: 20px; background: #e7f3ff; border: 2px dashed #007bff; font-family: monospace; font-size: 24px; font-weight: bold; text-align: center; border-radius: 6px; color: #0056b3; }
@@ -140,18 +138,33 @@
     }
 
     function actualizarInterfaz() {
-        const fam = document.getElementById('familia').value, conf = document.getElementById('config').value, info = dataRef[fam];
+        const fam = document.getElementById('familia').value, info = dataRef[fam];
+        
+        // 1. Visibilidad de Tablas de Referencia
+        const tableConfBox = document.getElementById('table-conf-box');
+        const tableJuntaBox = document.getElementById('table-junta-box');
+        
+        // Tabla Configuración: Solo si hay configuraciones (No Tubos)
+        tableConfBox.classList.toggle('hidden', !info.conf);
+        
+        // Tabla Juntas: Solo si el accesorio usa juntas (No Flanches)
+        tableJuntaBox.classList.toggle('hidden', !info.jun);
 
+        // 2. Manejo del selector de configuración
+        const divConf = document.getElementById('div-conf');
         if (info.conf) {
-            document.getElementById('div-conf').classList.remove('hidden');
+            divConf.classList.remove('hidden');
             const sel = document.getElementById('config');
             if (sel.getAttribute('data-fam') !== fam) {
                 sel.innerHTML = Object.entries(info.conf).map(([k,v]) => `<option value="${k}">${v}</option>`).join("");
                 sel.setAttribute('data-fam', fam);
                 document.querySelector('#table-conf tbody').innerHTML = Object.entries(info.conf).map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
             }
-        } else { document.getElementById('div-conf').classList.add('hidden'); }
+        } else {
+            divConf.classList.add('hidden');
+        }
 
+        const conf = document.getElementById('config').value;
         const esRectEnt = (fam === 'CT' && (conf === 'B' || conf === 'C')) || (fam === 'FL' && conf === 'C');
         const esRectSal = (fam === 'CT' && conf === 'B');
         
@@ -199,13 +212,11 @@
         const fam = document.getElementById('familia').value, conf = document.getElementById('config').value;
         const me = matEspMap[document.getElementById('material').value + document.getElementById('espesor').value];
         const jun = document.getElementById('junta').value, ang = document.getElementById('angulo').value;
-        
         const getDim = (p) => {
             const v1 = processVal(document.getElementById(`${p}1`).value, p);
             const v2 = processVal(document.getElementById(`${p}2`).value, p);
             return (!document.getElementById(`${p}2`).classList.contains('hidden')) ? `${v1}X${v2}` : v1;
         };
-
         const ent = getDim('ent'), sal = getDim('sal');
         let res = "";
         if (fam === "FL") res = `FL-${conf}-${ent}-${me}`;
@@ -213,7 +224,6 @@
         else if (fam === "CE") res = `CE-${conf}-${ent}-${ang}-${me}-${jun}`;
         else if (fam === "CF") res = `CF-${conf}-${ent}-${ang}-${me}-${jun}`;
         else if (fam === "CT") res = `CT-${conf}-${ent}-${sal}-${me}-${jun}`;
-        
         document.getElementById('final-code-display').innerText = res;
     }
     window.onload = actualizarInterfaz;
