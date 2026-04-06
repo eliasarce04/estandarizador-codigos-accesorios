@@ -176,7 +176,7 @@
         if (info.ang) {
             document.getElementById('div-angulo').classList.remove('hidden');
             if (fam === 'CF' && conf === 'B') {
-                selAng.innerHTML = `<option value="90">90° (AUTO)</option>`;
+                selAng.innerHTML = `<option value="0">0° (AUTO)</option>`;
                 selAng.disabled = true;
             } else {
                 selAng.innerHTML = info.ang.map(a => `<option value="${a}">${a}°</option>`).join("");
